@@ -43,11 +43,11 @@ public class Neo4jUbiGraph {
     public static void main(String[] args) throws SQLException {
         UbigraphClient graph = new UbigraphClient();
         graph.clear();
-        renderNeo4jGraph(graph, "jdbc:neo4j://localhost:7474/", 1000);
+        renderNeo4jGraph(graph, "jdbc:neo4j://localhost:7474/", 10000);
     }
 
     private static void renderNeo4jGraph(UbigraphClient graph, String url, int limit) throws SQLException {
-        Connection connection = DriverManager.getConnection(url);
+        Connection connection = DriverManager.getConnection(url, "neo4j", "123");
         try (PreparedStatement stmt = connection.prepareStatement(ALL_NODES_QUERY)) {
             stmt.setInt(1, limit);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -90,6 +90,7 @@ public class Neo4jUbiGraph {
     }
 
     private static int style(UbigraphClient graph, String label) {
+        System.out.println("xx label " + label);
         if (!styles.containsKey(label)) {
             Colors colorByLabel = Colors.values()[styles.size() % Colors.values().length];
             System.out.println("label " + label);

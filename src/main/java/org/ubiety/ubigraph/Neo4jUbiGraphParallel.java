@@ -39,17 +39,20 @@ public class Neo4jUbiGraphParallel {
                     "RETURN " +
                     " id(n) as start_id, head(labels(n)) as start_label, n as start_properties, " +
                     " id(m) as end_id, head(labels(m)) as end_label, m as end_properties, " +
+                    //" id(n) as start_id, head(labels(n)) + ':' + COALESCE(n.fullname, COALESCE(n.name, n.title)) as start_label, n as start_properties, " +
+                    //" id(m) as end_id, head(labels(m)) + ':' + COALESCE(m.fullname, COALESCE(m.name, m.title)) as end_label, m as end_properties, " +
                     " id(r) as rel_id, type(r) as rel_type, r as rel_properties " +
                     "LIMIT {1}";
 
     public static void main(String[] args) throws SQLException {
         UbigraphClient graph = new UbigraphClient();
         graph.clear();
-        renderNeo4jGraphParallel(graph, "jdbc:neo4j://localhost:7474/", 1000);
+        renderNeo4jGraphParallel(graph, "jdbc:neo4j://localhost:7474/", 10000);
     }
 
     private static void renderNeo4jGraphParallel(final UbigraphClient graph, String url, int limit) throws SQLException {
-        Connection connection = DriverManager.getConnection(url);
+        //Connection connection = DriverManager.getConnection(url);
+        Connection connection = DriverManager.getConnection(url, "neo4j", "123");
         try (PreparedStatement stmt = connection.prepareStatement(ALL_NODES_QUERY)) {
             stmt.setInt(1, limit);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -87,6 +90,8 @@ public class Neo4jUbiGraphParallel {
 
     private static int createUbiEdge(UbigraphClient graph, int from, int to) {
         int id = graph.newEdge(from, to);
+        graph.setEdgeAttribute(id, "stroke", "dashed");
+        graph.setEdgeAttribute(id, "spline", "true");
         return id;
     }
 
@@ -104,7 +109,7 @@ public class Neo4jUbiGraphParallel {
         if (!styles.containsKey(label)) {
             Colors colorByLabel = Colors.values()[styles.size() % Colors.values().length];
             System.out.println("label " + label);
-            int styleId = createVertexStyle(graph, Shape.cube, colorByLabel);
+            int styleId = createVertexStyle(graph, Shape.cube, colorByLabel, label);
             styles.put(label, styleId);
             return styleId;
         } else {
@@ -112,9 +117,10 @@ public class Neo4jUbiGraphParallel {
         }
     }
 
-    private static int createVertexStyle(UbigraphClient graph, Shape shape, Colors color) {
+    private static int createVertexStyle(UbigraphClient graph, Shape shape, Colors color, String label) {
         int style = nextStyleId();
         graph.newVertexStyle(style, 0);
+        graph.setVertexStyleAttribute(style, "label", label);
         graph.setVertexStyleAttribute(style, "shape", shape.name());
         graph.setVertexStyleAttribute(style, "size", "0.5");
         graph.setVertexStyleAttribute(style, "color", color.toHexValue());

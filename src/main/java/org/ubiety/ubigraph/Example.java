@@ -10,7 +10,7 @@ public class Example {
         UbigraphClient graph = new UbigraphClient();
 
         graph.clear();
-        int N = 100;
+        int N = 5000;
 
         int style = createStyle(graph);
 
